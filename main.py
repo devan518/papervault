@@ -47,7 +47,9 @@ templates = Jinja2Templates(directory="templates")
 
 cred = credentials.Certificate("credentials.json")
 
-if not firebase_admin._apps:
+try:
+    firebase_admin.get_app()
+except ValueError:
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
