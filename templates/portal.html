@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="login">
+        <section class="auth-card glass-card">
+            <h1>Login</h1>
+            {% if error %}
+            <div class="error-banner">
+                {{ error }}
+            </div>
+            {% endif %}
+            <form action="/login" method="post" class="auth-form">
+                <label for="classid">Class ID</label>
+                <input id="classid" name="classid" placeholder="e.g 2m, 4p, 3j" required>
+
+                <label for="password">Password</label>
+                <input id="password" type="password" name="password" placeholder="Password" required>
+
+                <button type="submit">Login</button>
+                <p>Don't have an account? <button onclick="loginSwitch('login')">Register</button></p>
+            </form>
+        </section>
+    </div>
+    <div class="register">
+        <section class="auth-card glass-card">
+            <h1>Create Account</h1>
+            {% if error %}
+            <div class="error-banner">
+                {{ error }}
+            </div>
+            {% endif %}
+            <form action="/register" method="post" enctype="multipart/form-data" class="auth-form">
+                <label for="classid">Class ID</label>
+                <input id="classid" name="classid" placeholder="Class ID" required>
+
+                <label for="password">Password</label>
+                <input id="password" name="password" type="password" required>
+
+                <label for="schedule">Upload Schedule</label>
+                <input id="schedule" name="schedule" type="file" required>
+
+                <button type="submit">Register</button>
+                <p>Have an account already? <button onclick="loginSwitch('register')">login</button></p>
+            </form>
+        </section>
+    </div>
+</body>
+</html>

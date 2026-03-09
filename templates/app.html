@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PaperVault App</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body class="page-app">
+    <div class="container">
+        <aside class="sidebar">
+            <h2>Navigation</h2>
+            <p>blank</p>
+        </aside>
+        <section class="content-panel">
+            <h1>Website still in construction.</h1>
+            <p>Logged in as {{ class }}</p>
+        </section>
+        <section class="files">
+            {% for day, data in days.items() %}
+            <div id="days">
+                <h3>{{ day }}</h3>
+                {% for subject in data.subjects %}
+                <div class="subjects">
+                    {{subject}}
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </section>
+    </div>
+</body>
+</html>

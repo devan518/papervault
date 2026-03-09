@@ -1,0 +1,44 @@
+body {
+    font-family: monospace;
+    font-size: 18px;
+}
+
+main {
+    max-width: 900px;
+    margin: auto;
+    padding: 40px;
+    border: 4px solid black;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+
+.nav-left {
+    font-weight: bold;
+}
+
+.nav-right {
+    display: flex;
+    justify-content: flex-end;
+    gap: 25px;
+    border: 2px solid black;
+    padding: 6px 12px;
+}
+
+.landing-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.footer {
+    display: flex;
+    gap: 50px;
+    justify-content: center;
+    align-items: flex-end;
+    height: 25%;
+}
