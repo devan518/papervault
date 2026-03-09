@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from firebase_admin import credentials, firestore
 import firebase_admin
 from supabase import create_client
-from apscheduler.schedulers.background import BackgroundScheduler
+#from apscheduler.schedulers.background import BackgroundScheduler
 import datetime
 from datetime import date
 import json
@@ -14,7 +14,6 @@ import secrets
 import string
 import random
 import logging
-from passlib.hash import bcrypt
 from dotenv import load_dotenv
 import os
 
@@ -93,17 +92,6 @@ def create_new_day_for_all_classes():
     docs = db.collection("classes").stream()
     for doc in docs:
         create_new_day_for_class(doc.id)
-
-scheduler = BackgroundScheduler()
-
-scheduler.add_job(
-    create_new_day_for_all_classes,
-    "cron",
-    hour=0,
-    minute=0
-)
-
-scheduler.start()
 
 def get_class_from_session(session_id):
 
