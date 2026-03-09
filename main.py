@@ -53,7 +53,7 @@ if not firebase_admin._apps:
 
 db = firestore.client()
 
-load_dotenv()
+load_dotenv("keys.env")
 
 url = os.getenv("SUPABASE_URL")
 key = os.getenv("ANON_KEY")
