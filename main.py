@@ -5,7 +5,6 @@ from fastapi.staticfiles import StaticFiles
 from firebase_admin import credentials, firestore
 import firebase_admin
 from supabase import create_client
-#from apscheduler.schedulers.background import BackgroundScheduler
 import datetime
 from datetime import date
 import json
@@ -62,6 +61,13 @@ supabase = create_client(url, key)
 @app.post("/modify-day")
 async def modify_day():
     return
+
+@app.get("/health")
+async def show_health():
+    return {
+        "status": "ok",
+        "time": datetime.datetime.utcnow().isoformat()
+    }
 
 def create_new_day_for_class(classid: str):
 

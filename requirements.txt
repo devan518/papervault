@@ -3,3 +3,5 @@ uvicorn
 jinja2
 firebase-admin
 supabase
+python-multipart
+python-dotenv
