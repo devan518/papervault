@@ -7,27 +7,7 @@
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-    <div class="login">
-        <section class="auth-card glass-card">
-            <h1>Login</h1>
-            {% if error %}
-            <div class="error-banner">
-                {{ error }}
-            </div>
-            {% endif %}
-            <form action="/login" method="post" class="auth-form">
-                <label for="classid">Class ID</label>
-                <input id="classid" name="classid" placeholder="e.g 2m, 4p, 3j" required>
-
-                <label for="password">Password</label>
-                <input id="password" type="password" name="password" placeholder="Password" required>
-
-                <button type="submit">Login</button>
-                <p>Don't have an account? <button onclick="loginSwitch('login')">Register</button></p>
-            </form>
-        </section>
-    </div>
-    <div class="register">
+    <div class="portal">
         <section class="auth-card glass-card">
             <h1>Create Account</h1>
             {% if error %}
@@ -41,7 +21,7 @@
 
                 <label for="password">Password</label>
                 <input id="password" name="password" type="password" required>
-
+                <br>
                 <label for="schedule">Upload Schedule</label>
                 <input id="schedule" name="schedule" type="file" required>
 

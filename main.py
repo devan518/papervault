@@ -71,9 +71,9 @@ async def show_health():
         "time": datetime.datetime.utcnow().isoformat()
     }
 
-def create_new_day_for_class(classid: str):
-
-    currentDate = date.today()
+def create_new_day_for_class(classid: str, currentDate):
+    #e.g currentDate = date.today()
+    #essentially the weekday e.g monday tuesday etc
     today = currentDate.strftime("%A").lower()
     date_key = str(currentDate)
 
@@ -96,11 +96,6 @@ def create_new_day_for_class(classid: str):
             "days": data["days"]
         })
 
-def create_new_day_for_all_classes():
-    docs = db.collection("classes").stream()
-    for doc in docs:
-        create_new_day_for_class(doc.id)
-
 def get_class_from_session(session_id):
 
     doc = db.collection("sessions").document(session_id).get()
@@ -110,13 +105,21 @@ def get_class_from_session(session_id):
 
     return doc.to_dict()["classid"]
 
+async def create_missing_days(classid: str):
+    document = db.collection("classes").document(classid).get()
+    for days in document["days"]:
+        if date.today() not in days:
+            create_new_day_for_class(classid)
+    return
+
+
 @app.post("/upload")
-async def upload(file: UploadFile = File(...), classid: str = Form(...), reason: str = Form(...)):
+async def upload(file: UploadFile = File(...), classid: str = Form(...), reason: str = Form(...), day: str = Form(...)):
 
     file_bytes = await file.read()
 
     result = supabase.storage.from_("documents").upload(
-        f"{classid}/{reason}/{file.filename}",
+        f"{classid}/{reason}/{day}/{file.filename}",
         file_bytes,
         {"content-type": file.content_type}
     )
@@ -252,14 +255,14 @@ async def register(request: Request, classid: str = Form(...), password: str = F
 @app.get("/register")
 async def show_register_page(request: Request):
     return templates.TemplateResponse(
-        "portal.html", 
+        "register.html", 
         {"request": request}
     )
 
 @app.get("/login")
 async def show_login_page(request: Request):
     return templates.TemplateResponse(
-        "portal.html",
+        "login.html",
         {
             "request": request,
         }
