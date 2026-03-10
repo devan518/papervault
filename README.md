@@ -1,6 +1,6 @@
 # papervault
 a small app for storing files (still a work in progress)
-### how to run my shitty code
+### how to run my bad code
 its some pretty bad code and it still doesnt have stuff like password encryption or error handling but i am open sourcing it for any tips. 
 for the app to work, 
 1.) git clone
