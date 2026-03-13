@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Form, UploadFile, File
+from fastapi import FastAPI, Request, Form, UploadFile
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -22,28 +22,30 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 def generate_session():
     return secrets.token_urlsafe(32)
+
 
 def random_string(length: int) -> str:
     characters = string.ascii_letters + string.digits
     return ''.join(random.choice(characters) for _ in range(length))
 
 
-#TEMPLATE STRUCTURE
-
 classes = {
     None: {
         "password": None,
         "schedules": [],
         "preferences": {},
+        "days": {}
     }
 }
 
-#constants
+
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
+
 
 cred = credentials.Certificate("credentials.json")
 
@@ -54,15 +56,14 @@ except ValueError:
 
 db = firestore.client()
 
+
 load_dotenv("keys.env")
 
 url = os.getenv("SUPABASE_URL")
 key = os.getenv("ANON_KEY")
+
 supabase = create_client(url, key)
 
-@app.post("/modify-day")
-async def modify_day():
-    return
 
 @app.get("/health")
 async def show_health():
@@ -71,22 +72,27 @@ async def show_health():
         "time": datetime.datetime.utcnow().isoformat()
     }
 
+
 def create_new_day_for_class(classid: str, currentDate):
-    #e.g currentDate = date.today()
-    #essentially the weekday e.g monday tuesday etc
+
     today = currentDate.strftime("%A").lower()
     date_key = str(currentDate)
 
     doc_ref = db.collection("classes").document(classid)
     doc = doc_ref.get()
+
+    if not doc.exists:
+        return
+
     data = doc.to_dict()
 
-    preference = int(data["preferences"]["DefaultScheduleIndex"])
+    preference = int(data.get("preferences", {}).get("DefaultScheduleIndex", 0))
 
     if "days" not in data:
         data["days"] = {}
 
     if date_key not in data["days"]:
+
         data["days"][date_key] = {
             "subjects": data["schedules"][preference][today],
             "isHoliday?": False
@@ -95,6 +101,22 @@ def create_new_day_for_class(classid: str, currentDate):
         doc_ref.update({
             "days": data["days"]
         })
+
+
+async def create_missing_days(classid: str):
+
+    document = db.collection("classes").document(classid).get()
+
+    if not document.exists:
+        return
+
+    data = document.to_dict()
+
+    today = date.today()
+
+    if str(today) not in data.get("days", {}):
+        create_new_day_for_class(classid, today)
+
 
 def get_class_from_session(session_id):
 
@@ -105,26 +127,157 @@ def get_class_from_session(session_id):
 
     return doc.to_dict()["classid"]
 
-async def create_missing_days(classid: str):
+
+def get_files_for_class(classid):
+
+    files = []
+
     document = db.collection("classes").document(classid).get()
-    for days in document["days"]:
-        if date.today() not in days:
-            create_new_day_for_class(classid)
-    return
+
+    if not document.exists:
+        return files
+
+    data = document.to_dict()
+
+    days = data.get("days", {})
+
+    for day, daydata in days.items():
+
+        subjects = daydata.get("subjects", [])
+
+        for subject in subjects:
+
+            folder = f"{classid}/{day}/{subject}"
+
+            try:
+
+                items = supabase.storage.from_("documents").list(folder)
+
+                for item in items:
+
+                    filename = item.get("name")
+
+                    if not filename:
+                        continue
+
+                    path = f"{folder}/{filename}"
+
+                    signed = supabase.storage.from_("documents").create_signed_url(
+                        path,
+                        3600
+                    )
+
+                    url = signed.get("signedURL") or signed.get("signed_url")
+
+                    files.append({
+                        "day": day,
+                        "subject": subject,
+                        "name": filename,
+                        "path": path,
+                        "url": url
+                    })
+
+            except Exception:
+                pass
+
+    return files
 
 
-@app.post("/upload")
-async def upload(file: UploadFile = File(...), classid: str = Form(...), reason: str = Form(...), day: str = Form(...)):
+@app.post("/modify-day")
+async def modify_day(request: Request):
 
-    file_bytes = await file.read()
+    form = await request.form()
 
-    result = supabase.storage.from_("documents").upload(
-        f"{classid}/{reason}/{day}/{file.filename}",
-        file_bytes,
-        {"content-type": file.content_type}
-    )
+    session = request.cookies.get("session")
 
-    return {"result": result}
+    if not session:
+        return RedirectResponse("/login", status_code=303)
+
+    classid = get_class_from_session(session)
+
+    if not classid:
+        return RedirectResponse("/login", status_code=303)
+
+    class_doc = db.collection("classes").document(classid).get()
+
+    data = class_doc.to_dict()
+
+    days = data.get("days", {})
+
+    for key, value in form.items():
+
+        # FILE UPLOAD
+        if key.startswith("file_") and hasattr(value, "filename"):
+
+            parts = key.replace("file_", "").split("_", 1)
+
+            if len(parts) != 2:
+                continue
+
+            day, subject = parts
+
+            file_bytes = await value.read()
+
+            if len(file_bytes) > 5 * 1024 * 1024:
+                continue
+
+            filename = f"{random_string(6)}_{value.filename}"
+
+            path = f"{classid}/{day}/{subject}/{filename}"
+
+            try:
+
+                supabase.storage.from_("documents").upload(
+                    path,
+                    file_bytes,
+                    {"content-type": value.content_type}
+                )
+
+            except Exception as e:
+
+                logger.warning(f"Upload failed {path}: {e}")
+
+        # DELETE FILE
+        if key.startswith("delete_"):
+
+            path = key.replace("delete_", "")
+
+            try:
+                supabase.storage.from_("documents").remove([path])
+            except Exception as e:
+                logger.warning(f"Delete failed {path}: {e}")
+
+        # HOMEWORK
+        if key.startswith("homework_"):
+
+            parts = key.replace("homework_", "").split("_", 1)
+
+            if len(parts) != 2:
+                continue
+
+            day, subject = parts
+
+            if day in days:
+
+                if "homework" not in days[day]:
+                    days[day]["homework"] = {}
+
+                days[day]["homework"][subject] = value
+
+        # COMMENTS
+        if key.startswith("comments_"):
+
+            day = key.replace("comments_", "")
+
+            if day in days:
+                days[day]["comments"] = value
+
+    db.collection("classes").document(classid).update({
+        "days": days
+    })
+
+    return RedirectResponse("/app", status_code=303)
+
 
 @app.post("/login")
 async def login(request: Request, classid: str = Form(...), password: str = Form(...)):
@@ -133,31 +286,19 @@ async def login(request: Request, classid: str = Form(...), password: str = Form
 
     if not document.exists:
 
-        logger.warning(f"Login failed: class '{classid}' does not exist")
-
         return templates.TemplateResponse(
             "login.html",
-            {
-                "request": request,
-                "error": "Class does not exist"
-            }
+            {"request": request, "error": "Class does not exist"}
         )
 
     doc = document.to_dict()
 
     if doc["password"] != password:
 
-        logger.warning(f"Login failed: incorrect password for '{classid}'")
-
         return templates.TemplateResponse(
             "login.html",
-            {
-                "request": request,
-                "error": "Incorrect password"
-            }
+            {"request": request, "error": "Incorrect password"}
         )
-
-    logger.info(f"Login success: {classid}")
 
     session_id = generate_session()
 
@@ -167,14 +308,16 @@ async def login(request: Request, classid: str = Form(...), password: str = Form
     })
 
     response = RedirectResponse("/app", status_code=303)
+
     response.set_cookie(
-    key="session",
-    value=session_id,
-    httponly=True,
-    samesite="lax"
+        key="session",
+        value=session_id,
+        httponly=True,
+        samesite="lax"
     )
 
     return response
+
 
 @app.get("/app")
 async def app_page(request: Request):
@@ -182,59 +325,56 @@ async def app_page(request: Request):
     session = request.cookies.get("session")
 
     if not session:
-        return RedirectResponse("/login")
+        return RedirectResponse("/login", status_code=303)
 
     classid = get_class_from_session(session)
 
     if not classid:
-        return RedirectResponse("/login")
+        return RedirectResponse("/login", status_code=303)
+
+    await create_missing_days(classid)
 
     document = db.collection("classes").document(classid).get()
 
     doc = document.to_dict()
+
+    files = get_files_for_class(classid)
 
     return templates.TemplateResponse(
         "app.html",
         {
             "request": request,
             "class": classid,
-            "schedules": doc["schedules"],
-            "days": doc["days"],
+            "schedules": doc.get("schedules", []),
+            "days": doc.get("days", {}),
+            "files": files
         }
     )
 
+
 @app.post("/register")
-async def register(request: Request, classid: str = Form(...), password: str = Form(...), schedule: UploadFile = File(...)):
+async def register(request: Request, classid: str = Form(...), password: str = Form(...), schedule: UploadFile = Form(...)):
 
     existing = db.collection("classes").document(classid).get()
 
     if existing.exists:
 
-        logger.warning(f"Register failed: class '{classid}' already exists")
-
         return templates.TemplateResponse(
             "register.html",
-            {
-                "request": request,
-                "error": "Class already exists"
-            }
+            {"request": request, "error": "Class already exists"}
         )
 
     try:
 
         schedule_bytes = await schedule.read()
+
         schedule_json = json.loads(schedule_bytes.decode())
 
-    except Exception as e:
-
-        logger.error(f"Schedule upload failed for '{classid}'")
+    except Exception:
 
         return templates.TemplateResponse(
             "register.html",
-            {
-                "request": request,
-                "error": "Invalid schedule file"
-            }
+            {"request": request, "error": "Invalid schedule file"}
         )
 
     template = copy.deepcopy(classes)
@@ -247,32 +387,33 @@ async def register(request: Request, classid: str = Form(...), password: str = F
 
     db.collection("classes").document(classid).set(template[classid])
 
-    logger.info(f"Class registered: {classid}")
+    create_new_day_for_class(classid, date.today())
 
-    create_new_day_for_class(classid=classid)
     return RedirectResponse("/login", status_code=303)
+
 
 @app.get("/register")
 async def show_register_page(request: Request):
+
     return templates.TemplateResponse(
-        "register.html", 
+        "register.html",
         {"request": request}
     )
 
+
 @app.get("/login")
 async def show_login_page(request: Request):
+
     return templates.TemplateResponse(
         "login.html",
-        {
-            "request": request,
-        }
+        {"request": request}
     )
+
 
 @app.get("/")
 async def homepage(request: Request):
+
     return templates.TemplateResponse(
         "index.html",
-        {
-            "request": request,
-        }
+        {"request": request}
     )

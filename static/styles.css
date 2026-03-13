@@ -1,9 +1,6 @@
 body{
     font-family:monospace;
-    margin:25px;
     background:#f4f4f4;
-    border-radius:20px;
-    box-shadow:5px 5px 10px rgba(0,0,0,.3);
 }
 
 img {
@@ -15,8 +12,6 @@ img {
 a {
     text-decoration: none;
     color: black;
-    padding: 10px;
-    border: 1px solid black;
 }
 a:hover {
     transition: 0.3s;
@@ -29,7 +24,7 @@ a:hover {
     flex-direction:column;
     justify-content:center;
     align-items:center;
-    min-height:70vh;
+    min-height: 100vh;
 }
 
 .navbar{
@@ -41,15 +36,11 @@ a:hover {
     border-bottom:1px solid #ccc;
 }
 
-.nav-links a{
-    margin-left:20px;
-    color:black;
-    text-decoration:none;
-}
-
 .container{
     max-width:900px;
     margin:auto;
+    padding: 15px;
+    min-height: 100vh;
 }
 
 .card{

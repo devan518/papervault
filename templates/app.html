@@ -6,28 +6,131 @@
     <title>PaperVault App</title>
     <link rel="stylesheet" href="/static/styles.css">
 </head>
+
 <body class="page-app">
-    <div class="container">
-        <aside class="sidebar">
-            <h2>Navigation</h2>
-            <p>blank</p>
-        </aside>
-        <section class="content-panel">
-            <h1>Website still in construction.</h1>
-            <p>Logged in as {{ class }}</p>
-        </section>
-        <section class="files">
+
+<header class="navbar">
+    <div class="logo">PaperVault</div>
+
+    <nav class="nav-links">
+        <a href="/">Home</a>
+        <a href="/login">Login</a>
+        <a href="/register">Register</a>
+        <a href="/docs">Docs</a>
+        <a href="/about">About</a>
+    </nav>
+</header>
+
+<div class="container">
+
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar">
+
+        <h2>Navigation</h2>
+        <ul class="nav-panel">
+            <li>Dashboard</li>
+            <li>Files</li>
+            <li>Homework</li>
+            <li>Projects</li>
+        </ul>
+
+        <!-- EVENTS PANEL -->
+        <div class="events-panel">
+            <h2>Events</h2>
+
+            <div class="event">
+                <strong>Project Due</strong>
+                <p>Physics Lab Report</p>
+                <span>Friday</span>
+            </div>
+
+            <div class="event">
+                <strong>Exam</strong>
+                <p>Chemistry Test</p>
+                <span>Next Week</span>
+            </div>
+
+            <div class="event">
+                <strong>Reminder</strong>
+                <p>Submit SBA draft</p>
+                <span>Tomorrow</span>
+            </div>
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN PANEL -->
+    <section class="content-panel">
+        <h1>PaperVault</h1>
+        <p>Logged in as {{ class }}</p>
+    </section>
+
+
+    <!-- FILE / HOMEWORK PANEL -->
+    <section class="files">
+
+        <form method="POST" action="/upload" enctype="multipart/form-data">
+
             {% for day, data in days.items() %}
-            <div id="days">
+            <div class="days">
+
                 <h3>{{ day }}</h3>
+
                 {% for subject in data.subjects %}
                 <div class="subjects">
-                    {{subject}}
+
+                    <label>{{ subject }}</label>
+
+                    <!-- FILE UPLOAD -->
+                    <input 
+                        type="file"
+                        name="file_{{ day }}_{{ subject }}"
+                        accept="image/*"
+                        multiple
+                    >
+
+                    <!-- HOMEWORK FIELD -->
+                    <textarea
+                        name="homework_{{ day }}_{{ subject }}"
+                        placeholder="Homework or notes for {{ subject }}"
+                    ></textarea>
+
                 </div>
                 {% endfor %}
+
+                <!-- GENERAL COMMENTS FOR THE DAY -->
+                <textarea
+                    name="comments_{{ day }}"
+                    placeholder="General comments, notes, reminders..."
+                ></textarea>
+
             </div>
             {% endfor %}
-        </section>
+
+            <button type="submit">Upload Files</button>
+
+        </form>
+
+    </section>
+
+</div>
+
+
+<footer class="footer">
+
+    <div>
+        <h3>Contact</h3>
+        <a href="https://discord.com/users/1020374865410277406">discord</a>
+        <p>1 868 484-8881</p>
     </div>
+
+    <div>
+        <h3>Links</h3>
+        <a href="https://github.com/devan518/papervault">github</a>
+    </div>
+
+</footer>
+
 </body>
 </html>
