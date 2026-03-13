@@ -1,5 +1,9 @@
 # papervault
 a small app for storing files (still a work in progress)
+# WARNING
+i was in a rush and i had an error i was stuck on, long story short ai slop coded it, it gives errors.
+pls somebody fix them cuz im kinda new to jinja2 and web dev! i really dont wanna abandon this project too. it used to work till ai just had to ruin it 
+and halluncinate.
 ### how to run my bad code
 its some pretty bad code and it still doesnt have stuff like password encryption or error handling but i am open sourcing it for any tips. 
 for the app to work, 
