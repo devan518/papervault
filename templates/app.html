@@ -21,6 +21,7 @@
 
 <div class="container">
 
+<!-- SIDEBAR -->
 <aside class="sidebar">
 
 <h2>Events</h2>
@@ -44,10 +45,16 @@
 <form method="POST" action="/modify-day">
 
 <label>Date</label>
+<br>
 <input type="date" name="new_day">
 
-<label>Subjects (comma separated)</label>
+<br><br>
+
+<label>Subjects</label>
+<br>
 <input type="text" name="subjects" placeholder="Math, Physics, Biology">
+
+<br><br>
 
 <button type="submit">Create Day</button>
 
@@ -57,11 +64,14 @@
 
 
 
+<!-- MAIN CONTENT -->
 <section class="content-panel">
 
 <h1>PaperVault</h1>
 
 <p>Logged in as {{ class }}</p>
+
+<hr>
 
 <form method="POST" action="/modify-day" enctype="multipart/form-data">
 
@@ -71,18 +81,30 @@
 
 <h2>{{ day }}</h2>
 
+<hr>
+
 {% for subject in data.subjects %}
 
 <div class="subject-block">
 
-<h3>{{ subject }}</h3>
+<strong>{{ subject }}</strong>
+
+<br>
 
 <input type="file" name="file_{{day}}_{{subject}}">
 
+<br><br>
+
 <textarea
 name="homework_{{day}}_{{subject}}"
-placeholder="Homework or notes"
->{% if data.homework and subject in data.homework %}{{ data.homework[subject] }}{% endif %}</textarea>
+placeholder="Homework or notes for {{subject}}"
+>
+{% if data.homework and subject in data.homework %}
+{{ data.homework[subject] }}
+{% endif %}
+</textarea>
+
+<br>
 
 </div>
 
@@ -90,15 +112,21 @@ placeholder="Homework or notes"
 
 <textarea
 name="comments_{{day}}"
-placeholder="Comments"
->{{ data.comments if data.comments else "" }}</textarea>
+placeholder="General comments, notes, reminders..."
+>
+{{ data.comments if data.comments else "" }}
+</textarea>
 
 </div>
+
+<hr>
 
 {% endfor %}
 
 
 <h2>Uploaded Files</h2>
+
+<hr>
 
 <div class="files">
 
@@ -106,9 +134,15 @@ placeholder="Comments"
 
 <div class="file-row">
 
-<strong>{{file.day}}</strong> - {{file.subject}}
+<strong>{{file.day}}</strong>
+ —
+{{file.subject}}
+
+<br>
 
 <a href="{{file.url}}" target="_blank">{{file.name}}</a>
+
+<br>
 
 <button
 type="submit"
@@ -120,9 +154,13 @@ Delete
 
 </div>
 
+<hr>
+
 {% endfor %}
 
 </div>
+
+<br>
 
 <button type="submit">Save Changes</button>
 

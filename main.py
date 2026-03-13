@@ -239,6 +239,21 @@ async def modify_day(request: Request):
 
     return RedirectResponse("/app",303)
 
+@app.get("/login")
+async def show_login(request: Request):
+    return templates.TemplateResponse(
+        "login.html",
+        {"request": request}
+    )
+
+@app.get("/register")
+async def show_register(request: Request):
+    return templates.TemplateResponse(
+        "register.html",
+        {"request": request}
+    )
+
+
 
 @app.post("/login")
 async def login(request: Request, classid: str = Form(...), password: str = Form(...)):
